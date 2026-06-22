@@ -11,6 +11,15 @@ export const STATUS_AUTORIZACAO_OPTIONS: StatusAutorizacao[] = [
   "VALIDAR CONVÊNIO",
 ];
 
+export const STATUS_AGENDAMENTO_OPTIONS: string[] = [
+  "EXAME REALIZADO",
+  "AGENDADO",
+  "AGENDAMENTO REALIZADO",
+  "AGENDAMENTO NÃO REALIZADO",
+  "SEM AGENDAMENTO",
+  "VALIDAR AGENDAMENTO",
+];
+
 export interface ExameImagem {
   cd_setor_atendimento: number | string | null;
   setor: string | null;
@@ -27,8 +36,13 @@ export interface ExameImagem {
   nr_seq_proc_interno: number | string | null;
   cd_agenda: number | string | null;
   ds_agenda: string | null;
+  status_agendamento: string | null;
   dt_prescricao: string | null;
+  dt_validade_prescr: string | null;
+  ie_status_agenda: string | null;
+  ds_status_agenda: string | null;
   hr_inicio: string | null;
+  dt_evento_exame: string | null;
   rn: number | string | null;
   possui_autorizacao: "SIM" | "NÃO" | string | null;
   nr_seq_autorizacao: number | string | null;

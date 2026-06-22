@@ -19,7 +19,7 @@ Set-Location $ProjectRoot
 $ErrorActionPreference = "Continue"
 Start-Transcript -Path (Join-Path $LogDir "web.live.log") -Force | Out-Null
 try {
-  & $Node node_modules\vite\bin\vite.js dev --host 127.0.0.1
+  & $Node node_modules\vite\bin\vite.js dev --host 0.0.0.0
 } finally {
   Stop-Transcript | Out-Null
 }

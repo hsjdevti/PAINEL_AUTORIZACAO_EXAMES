@@ -26,6 +26,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   fetchExamesImagem,
+  STATUS_AGENDAMENTO_OPTIONS,
   STATUS_AUTORIZACAO_OPTIONS,
   type ExameImagem,
   type StatusAutorizacao,
@@ -53,9 +54,9 @@ type SortKey =
   | "setor"
   | "ds_convenio"
   | "nr_prescricao"
-  | "ds_agenda"
-  | "hr_inicio"
+  | "dt_evento_exame"
   | "ds_procedimento_interno"
+  | "status_agendamento"
   | "status_autorizacao";
 
 const PAGE_SIZE = 15;
@@ -66,9 +67,9 @@ const COLUMNS: { key: SortKey; label: string; width?: string }[] = [
   { key: "setor", label: "Setor", width: "w-[190px]" },
   { key: "ds_convenio", label: "Convênio", width: "w-[190px]" },
   { key: "nr_prescricao", label: "Prescrição", width: "w-[140px]" },
-  { key: "ds_agenda", label: "Agenda", width: "w-[180px]" },
-  { key: "hr_inicio", label: "Dt. Agenda", width: "w-[165px]" },
+  { key: "dt_evento_exame", label: "Dt. Agenda", width: "w-[165px]" },
   { key: "ds_procedimento_interno", label: "Procedimento", width: "min-w-[260px]" },
+  { key: "status_agendamento", label: "Status Agendamento", width: "w-[210px]" },
   { key: "status_autorizacao", label: "Autorização", width: "w-[230px]" },
 ];
 
@@ -98,6 +99,23 @@ function statusClasses(status: StatusAutorizacao) {
         bar: "bg-status-validate",
         badge: "bg-status-validate-bg text-status-validate ring-1 ring-status-validate/50",
       };
+  }
+}
+
+function agendaStatusBadge(status: string | null | undefined) {
+  switch (status) {
+    case "EXAME REALIZADO":
+      return "bg-primary/15 text-primary ring-1 ring-primary/30";
+    case "AGENDAMENTO REALIZADO":
+      return "bg-status-authorized-bg text-status-authorized ring-1 ring-status-authorized/40";
+    case "AGENDADO":
+      return "bg-status-validate-bg text-status-validate ring-1 ring-status-validate/40";
+    case "AGENDAMENTO NÃO REALIZADO":
+      return "bg-status-pending-bg text-status-pending ring-1 ring-status-pending/45";
+    case "SEM AGENDAMENTO":
+      return "bg-status-empty-bg text-status-empty ring-1 ring-status-empty/40";
+    default:
+      return "bg-secondary text-secondary-foreground ring-1 ring-border";
   }
 }
 
@@ -144,12 +162,14 @@ function Painel() {
   const [now, setNow] = useState<Date>(new Date());
   const [q, setQ] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [prescrFrom, setPrescrFrom] = useState<Date | undefined>(undefined);
+  const [prescrTo, setPrescrTo] = useState<Date | undefined>(undefined);
   const [fSetor, setFSetor] = useState("");
   const [fPaciente, setFPaciente] = useState("");
   const [fConvenio, setFConvenio] = useState("");
   const [fStatus, setFStatus] = useState<StatusAutorizacao | "">("");
-  const [sortKey, setSortKey] = useState<SortKey>("hr_inicio");
+  const [fStatusAgenda, setFStatusAgenda] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("dt_evento_exame");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(1);
 
@@ -184,11 +204,17 @@ function Painel() {
     const qLower = normalize(q.trim());
     const pacienteLower = normalize(fPaciente.trim());
     const convenioLower = normalize(fConvenio.trim());
-    const fromTs = dateFrom
+    const dayStart = dateFrom
       ? new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate(), 0, 0, 0).getTime()
       : null;
-    const toTs = dateTo
-      ? new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate(), 23, 59, 59).getTime()
+    const dayEnd = dateFrom
+      ? new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate(), 23, 59, 59, 999).getTime()
+      : null;
+    const prescrStart = prescrFrom
+      ? new Date(prescrFrom.getFullYear(), prescrFrom.getMonth(), prescrFrom.getDate(), 0, 0, 0).getTime()
+      : null;
+    const prescrEnd = prescrTo
+      ? new Date(prescrTo.getFullYear(), prescrTo.getMonth(), prescrTo.getDate(), 23, 59, 59, 999).getTime()
       : null;
 
     return data.filter((row) => {
@@ -201,8 +227,8 @@ function Painel() {
             row.cd_convenio,
             row.ds_convenio,
             row.nr_prescricao,
-            row.ds_agenda,
             row.ds_procedimento_interno,
+            row.status_agendamento,
             row.status_autorizacao,
           ].join(" "),
         );
@@ -219,23 +245,32 @@ function Painel() {
       }
 
       if (fStatus && row.status_autorizacao !== fStatus) return false;
+      if (fStatusAgenda && valueText(row.status_agendamento) !== fStatusAgenda) return false;
 
-      const agendaTs = parseDateTime(row.hr_inicio);
-      if ((fromTs !== null || toTs !== null) && agendaTs === null) return false;
-      if (fromTs !== null && agendaTs !== null && agendaTs < fromTs) return false;
-      if (toTs !== null && agendaTs !== null && agendaTs > toTs) return false;
+      if (dayStart !== null && dayEnd !== null) {
+        const agendaTs = parseDateTime(row.dt_evento_exame);
+        if (agendaTs === null) return false;
+        if (agendaTs < dayStart || agendaTs > dayEnd) return false;
+      }
+
+      if (prescrStart !== null || prescrEnd !== null) {
+        const prescrTs = parseDateTime(row.dt_prescricao);
+        if (prescrTs === null) return false;
+        if (prescrStart !== null && prescrTs < prescrStart) return false;
+        if (prescrEnd !== null && prescrTs > prescrEnd) return false;
+      }
 
       return true;
     });
-  }, [data, q, fSetor, fPaciente, fConvenio, fStatus, dateFrom, dateTo]);
+  }, [data, q, fSetor, fPaciente, fConvenio, fStatus, fStatusAgenda, dateFrom, prescrFrom, prescrTo]);
 
   const sorted = useMemo(() => {
     const rows = [...filtered];
 
     rows.sort((a, b) => {
-      if (sortKey === "hr_inicio") {
-        const av = parseDateTime(a.hr_inicio) ?? Number.POSITIVE_INFINITY;
-        const bv = parseDateTime(b.hr_inicio) ?? Number.POSITIVE_INFINITY;
+      if (sortKey === "dt_evento_exame") {
+        const av = parseDateTime(a.dt_evento_exame) ?? Number.POSITIVE_INFINITY;
+        const bv = parseDateTime(b.dt_evento_exame) ?? Number.POSITIVE_INFINITY;
         return sortDir === "asc" ? av - bv : bv - av;
       }
 
@@ -256,7 +291,7 @@ function Painel() {
 
   useEffect(() => {
     setPage(1);
-  }, [q, fSetor, fPaciente, fConvenio, fStatus, dateFrom, dateTo]);
+  }, [q, fSetor, fPaciente, fConvenio, fStatus, fStatusAgenda, dateFrom, prescrFrom, prescrTo]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((current) => (current === "asc" ? "desc" : "asc"));
@@ -272,8 +307,10 @@ function Painel() {
     setFPaciente("");
     setFConvenio("");
     setFStatus("");
+    setFStatusAgenda("");
     setDateFrom(undefined);
-    setDateTo(undefined);
+    setPrescrFrom(undefined);
+    setPrescrTo(undefined);
   }
 
   function exportExcel() {
@@ -285,9 +322,9 @@ function Painel() {
       Convênio: displayValue(row.ds_convenio),
       "Código Convênio": displayValue(row.cd_convenio),
       Prescrição: displayValue(row.nr_prescricao),
-      Agenda: displayValue(row.ds_agenda),
-      "Dt. Agenda": formatDateTime(row.hr_inicio),
+      "Dt. Agenda": formatDateTime(row.dt_evento_exame),
       Procedimento: displayValue(row.ds_procedimento_interno || row.ds_procedimento),
+      "Status Agendamento": displayValue(row.status_agendamento),
       "Possui Autorização": displayValue(row.possui_autorizacao),
       "Estágio Autorização": displayValue(row.nr_seq_autorizacao),
       "Status Autorização": row.status_autorizacao,
@@ -302,9 +339,9 @@ function Painel() {
       { wch: 26 },
       { wch: 16 },
       { wch: 16 },
-      { wch: 24 },
       { wch: 20 },
       { wch: 42 },
+      { wch: 24 },
       { wch: 18 },
       { wch: 18 },
       { wch: 28 },
@@ -414,7 +451,7 @@ function Painel() {
             </label>
 
             <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Status
+              Autorização
               <select
                 value={fStatus}
                 onChange={(event) => setFStatus(event.target.value as StatusAutorizacao | "")}
@@ -430,7 +467,7 @@ function Painel() {
             </label>
 
             <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Dt. Agenda de
+              Dt. Agenda
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -457,30 +494,73 @@ function Painel() {
             </label>
 
             <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Dt. Agenda até
+              Dt. Prescrição Inicial
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
                       "h-10 w-full justify-start text-left font-normal",
-                      !dateTo && "text-muted-foreground",
+                      !prescrFrom && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecionar</span>}
+                    {prescrFrom ? format(prescrFrom, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecionar</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
+                    selected={prescrFrom}
+                    onSelect={setPrescrFrom}
                     initialFocus
                     className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
+            </label>
+
+            <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Dt. Prescrição Final
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-10 w-full justify-start text-left font-normal",
+                      !prescrTo && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {prescrTo ? format(prescrTo, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecionar</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={prescrTo}
+                    onSelect={setPrescrTo}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </label>
+
+            <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Status Agendamento
+              <select
+                value={fStatusAgenda}
+                onChange={(event) => setFStatusAgenda(event.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              >
+                <option value="">Todos</option>
+                {STATUS_AGENDAMENTO_OPTIONS.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
 
@@ -590,11 +670,20 @@ function Painel() {
                         )}
                         <div className="text-foreground">{displayValue(row.nr_prescricao)}</div>
                       </td>
-                      <td className="px-3 py-2.5 text-muted-foreground">{displayValue(row.ds_agenda)}</td>
                       <td className="px-3 py-2.5 font-mono text-[13px] text-foreground">
-                        {formatDateTime(row.hr_inicio)}
+                        {formatDateTime(row.dt_evento_exame)}
                       </td>
                       <td className="px-3 py-2.5 text-foreground">{displayValue(procedure)}</td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold tracking-wide",
+                            agendaStatusBadge(row.status_agendamento),
+                          )}
+                        >
+                          {displayValue(row.status_agendamento)}
+                        </span>
+                      </td>
                       <td className="px-3 py-2.5">
                         <span
                           className={cn(
