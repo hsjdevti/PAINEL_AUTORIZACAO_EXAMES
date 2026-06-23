@@ -673,7 +673,14 @@ function Painel() {
                       <td className="px-3 py-2.5 font-mono text-[13px] text-foreground">
                         {formatDateTime(row.dt_evento_exame)}
                       </td>
-                      <td className="px-3 py-2.5 text-foreground">{displayValue(procedure)}</td>
+                      <td className="px-3 py-2.5 text-foreground">
+                        <div>{displayValue(procedure)}</div>
+                        {row.nr_seq_proc_interno && (
+                          <div className="mt-0.5 font-mono text-[11px] text-muted-foreground/75">
+                            {row.nr_seq_proc_interno}
+                          </div>
+                        )}
+                      </td>
                       <td className="px-3 py-2.5">
                         <span
                           className={cn(
