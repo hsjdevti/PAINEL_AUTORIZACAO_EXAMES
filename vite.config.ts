@@ -18,11 +18,18 @@ export default defineConfig({
   },
   vite: {
     server: {
+      // Libera o acesso por qualquer nome de host (ex.: http://intrahsj:3050).
+      // O Vite, por padrão, bloqueia Hosts desconhecidos ("Blocked request...").
+      // Como é um serviço interno acessado por toda a empresa via DNS da infra,
+      // aceitamos qualquer Host. Para restringir, troque por uma lista, ex.:
+      //   allowedHosts: ["intrahsj", "10.10.0.56", "localhost"]
+      allowedHosts: true,
       proxy: {
         "/api": { target: apiTarget, changeOrigin: true },
       },
     },
     preview: {
+      allowedHosts: true,
       proxy: {
         "/api": { target: apiTarget, changeOrigin: true },
       },
