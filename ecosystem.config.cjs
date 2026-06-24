@@ -21,11 +21,17 @@
 const API_PORT = "3051";
 const WEB_PORT = "3050";
 
+// Node isolado para este app (não afeta o Node do sistema usado por outras aplicações).
+// Defina via variável de ambiente NODE_BIN ou edite o caminho padrão abaixo.
+// Se vazio/inexistente, o PM2 usa o Node padrão do sistema.
+const NODE_BIN = process.env.NODE_BIN || "C:\\hsj_dev\\node22\\node.exe";
+
 module.exports = {
   apps: [
     {
       name: "painel-exames-api",
       script: "server/index.js",
+      interpreter: NODE_BIN,
       cwd: __dirname,
       env: { API_PORT },
       autorestart: true,
@@ -34,6 +40,7 @@ module.exports = {
     {
       name: "painel-exames-web",
       script: "node_modules/vite/bin/vite.js",
+      interpreter: NODE_BIN,
       args: `dev --host 0.0.0.0 --port ${WEB_PORT}`,
       cwd: __dirname,
       env: { API_PORT },
