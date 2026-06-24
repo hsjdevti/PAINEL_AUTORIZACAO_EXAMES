@@ -20,6 +20,32 @@ export const STATUS_AGENDAMENTO_OPTIONS: string[] = [
   "VALIDAR AGENDAMENTO",
 ];
 
+// Classificação do "Setor Agenda".
+// Regras (Centro Médico tem precedência sobre Cardiológico para os tipos 30/94):
+//   - Centro Médico: cd_tipo_procedimento em 30, 94
+//   - Centro Cardiológico: cd_tipo_procedimento em 86, 87, 12 OU nr_seq_proc_interno em 19571, 13544
+//   - CDI: qualquer outro
+// Para ajustar, basta editar as listas abaixo.
+const TIPO_PROC_CENTRO_MEDICO = [30, 94];
+const TIPO_PROC_CENTRO_CARDIOLOGICO = [86, 87, 12];
+const SEQ_PROC_CENTRO_CARDIOLOGICO = [19571, 13544];
+
+export const AGENDA_SETOR_OPTIONS: string[] = ["CDI", "Centro Cardiológico", "Centro Médico"];
+
+export function getSetorAgenda(
+  cdTipoProcedimento: number | string | null | undefined,
+  nrSeqProcInterno: number | string | null | undefined,
+): string {
+  const tipo = Number(cdTipoProcedimento);
+  const seq = Number(nrSeqProcInterno);
+
+  if (TIPO_PROC_CENTRO_MEDICO.includes(tipo)) return "Centro Médico";
+  if (TIPO_PROC_CENTRO_CARDIOLOGICO.includes(tipo) || SEQ_PROC_CENTRO_CARDIOLOGICO.includes(seq)) {
+    return "Centro Cardiológico";
+  }
+  return "CDI";
+}
+
 export interface ExameImagem {
   cd_setor_atendimento: number | string | null;
   setor: string | null;
@@ -31,6 +57,7 @@ export interface ExameImagem {
   ds_convenio: string | null;
   nr_prescricao: number | string | null;
   cd_procedimento: number | string | null;
+  cd_tipo_procedimento: number | string | null;
   ds_procedimento: string | null;
   ds_procedimento_interno: string | null;
   nr_seq_proc_interno: number | string | null;

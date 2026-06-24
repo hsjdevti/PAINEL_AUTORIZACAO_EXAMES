@@ -13,6 +13,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Download,
+  FileText,
   Loader2,
   RefreshCw,
   RotateCcw,
@@ -25,7 +26,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  AGENDA_SETOR_OPTIONS,
   fetchExamesImagem,
+  getSetorAgenda,
   STATUS_AGENDAMENTO_OPTIONS,
   STATUS_AUTORIZACAO_OPTIONS,
   type ExameImagem,
@@ -169,6 +172,7 @@ function Painel() {
   const [fConvenio, setFConvenio] = useState("");
   const [fStatus, setFStatus] = useState<StatusAutorizacao | "">("");
   const [fStatusAgenda, setFStatusAgenda] = useState("");
+  const [fSetorAgenda, setFSetorAgenda] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("dt_evento_exame");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(1);
@@ -246,6 +250,7 @@ function Painel() {
 
       if (fStatus && row.status_autorizacao !== fStatus) return false;
       if (fStatusAgenda && valueText(row.status_agendamento) !== fStatusAgenda) return false;
+      if (fSetorAgenda && getSetorAgenda(row.cd_tipo_procedimento, row.nr_seq_proc_interno) !== fSetorAgenda) return false;
 
       if (dayStart !== null && dayEnd !== null) {
         const agendaTs = parseDateTime(row.dt_evento_exame);
@@ -262,7 +267,7 @@ function Painel() {
 
       return true;
     });
-  }, [data, q, fSetor, fPaciente, fConvenio, fStatus, fStatusAgenda, dateFrom, prescrFrom, prescrTo]);
+  }, [data, q, fSetor, fPaciente, fConvenio, fStatus, fStatusAgenda, fSetorAgenda, dateFrom, prescrFrom, prescrTo]);
 
   const sorted = useMemo(() => {
     const rows = [...filtered];
@@ -291,7 +296,7 @@ function Painel() {
 
   useEffect(() => {
     setPage(1);
-  }, [q, fSetor, fPaciente, fConvenio, fStatus, fStatusAgenda, dateFrom, prescrFrom, prescrTo]);
+  }, [q, fSetor, fPaciente, fConvenio, fStatus, fStatusAgenda, fSetorAgenda, dateFrom, prescrFrom, prescrTo]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((current) => (current === "asc" ? "desc" : "asc"));
@@ -308,6 +313,7 @@ function Painel() {
     setFConvenio("");
     setFStatus("");
     setFStatusAgenda("");
+    setFSetorAgenda("");
     setDateFrom(undefined);
     setPrescrFrom(undefined);
     setPrescrTo(undefined);
@@ -369,6 +375,15 @@ function Painel() {
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
+              <a
+                href="https://docs.google.com/document/d/1rdJDkGwYpJ0jYhU3-KfcR_iOnt7azT8gay-e0X00oOs/edit?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground transition hover:bg-accent"
+              >
+                <FileText className="h-4 w-4" />
+                Documentação
+              </a>
               <button
                 onClick={() => void refetch()}
                 disabled={isFetching}
@@ -545,6 +560,22 @@ function Painel() {
                   />
                 </PopoverContent>
               </Popover>
+            </label>
+
+            <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Setor Agenda
+              <select
+                value={fSetorAgenda}
+                onChange={(event) => setFSetorAgenda(event.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              >
+                <option value="">Todos</option>
+                {AGENDA_SETOR_OPTIONS.map((grupo) => (
+                  <option key={grupo} value={grupo}>
+                    {grupo}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

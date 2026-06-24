@@ -70,6 +70,7 @@ FROM (
         tasy.obter_desc_convenio(tasy.obter_convenio_atendimento(ap.nr_atendimento)) ds_convenio,
         pm.nr_prescricao,
         pc.cd_procedimento,
+        pro.cd_tipo_procedimento,
         pro.ds_procedimento,
         tasy.obter_desc_proc_interno(pc.nr_seq_proc_interno) ds_procedimento_interno,
         pc.nr_seq_proc_interno,
@@ -133,15 +134,19 @@ FROM (
 
     INNER JOIN tasy.procedimento pro
         ON pro.cd_procedimento = pc.cd_procedimento
-       AND pro.cd_tipo_procedimento IN (2,3,4)
+       AND pro.cd_tipo_procedimento IN (2,3,12,87,4,30,94)
 
     LEFT JOIN tasy.agenda_paciente ag
         ON ag.cd_pessoa_fisica = ap.cd_pessoa_fisica
        AND ag.cd_procedimento = pc.cd_procedimento
        AND ag.cd_pessoa_fisica IS NOT NULL
        AND ag.cd_agenda IN (
-            510,753,511,771,737,420,857,859,867,603,
-            862,860,621,881,871,1162,870,861,1082,418,419
+            510,753,511, -- Exames CDI
+
+            771,737,420,857,859,867,603,
+            862,860,621,881,871,1162,870,861,1082,418,419, -- Exames Cardiologia
+
+            214,355  -- Exames Centro Médico
        )
        AND ag.ie_status_agenda <> 'C'
        AND TRUNC(ag.dt_agenda) >= TRUNC(pm.dt_prescricao)
