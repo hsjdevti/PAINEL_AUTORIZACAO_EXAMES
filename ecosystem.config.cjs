@@ -26,12 +26,15 @@ const WEB_PORT = "3050";
 // Se vazio/inexistente, o PM2 usa o Node padrão do sistema.
 const NODE_BIN = process.env.NODE_BIN || "C:\\hsj_dev\\node22\\node.exe";
 
+// Modo binário: o PM2 executa o node22.exe diretamente (interpreter: "none"),
+// garantindo o Node isolado independente do `interpreter` do PM2.
 module.exports = {
   apps: [
     {
       name: "painel-exames-api",
-      script: "server/index.js",
-      interpreter: NODE_BIN,
+      script: NODE_BIN,
+      args: "server/index.js",
+      interpreter: "none",
       cwd: __dirname,
       env: { API_PORT },
       autorestart: true,
@@ -39,9 +42,9 @@ module.exports = {
     },
     {
       name: "painel-exames-web",
-      script: "node_modules/vite/bin/vite.js",
-      interpreter: NODE_BIN,
-      args: `dev --host 0.0.0.0 --port ${WEB_PORT}`,
+      script: NODE_BIN,
+      args: `node_modules/vite/bin/vite.js dev --host 0.0.0.0 --port ${WEB_PORT}`,
+      interpreter: "none",
       cwd: __dirname,
       env: { API_PORT },
       autorestart: true,
