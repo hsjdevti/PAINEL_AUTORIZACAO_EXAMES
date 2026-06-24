@@ -6,6 +6,10 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// O frontend encaminha /api para a API local. A porta da API vem de API_PORT
+// (default 3001 em dev local; no servidor usamos uma porta interna, ex.: 3051).
+const apiTarget = `http://localhost:${process.env.API_PORT || 3001}`;
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -15,10 +19,12 @@ export default defineConfig({
   vite: {
     server: {
       proxy: {
-        "/api": {
-          target: "http://localhost:3001",
-          changeOrigin: true,
-        },
+        "/api": { target: apiTarget, changeOrigin: true },
+      },
+    },
+    preview: {
+      proxy: {
+        "/api": { target: apiTarget, changeOrigin: true },
       },
     },
   },
