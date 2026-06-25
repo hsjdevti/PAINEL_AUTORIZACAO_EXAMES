@@ -18,7 +18,6 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
-  Video,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import * as XLSX from "xlsx";
@@ -64,9 +63,6 @@ type SortKey =
   | "status_autorizacao";
 
 const PAGE_SIZE = 15;
-
-// Link do vídeo tutorial — atualizar quando o vídeo estiver publicado.
-const VIDEO_TUTORIAL_URL = "#";
 
 const COLUMNS: { key: SortKey; label: string; width?: string }[] = [
   { key: "nr_atendimento", label: "Atendimento", width: "w-[140px]" },
@@ -375,15 +371,6 @@ function Painel() {
               >
                 <FileText className="h-4 w-4" />
                 Documentação
-              </a>
-              <a
-                href={VIDEO_TUTORIAL_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground transition hover:bg-accent"
-              >
-                <Video className="h-4 w-4" />
-                Vídeo Tutorial
               </a>
               <button
                 onClick={() => void refetch()}
