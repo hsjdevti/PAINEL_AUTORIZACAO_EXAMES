@@ -18,6 +18,7 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  Video,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import * as XLSX from "xlsx";
@@ -63,6 +64,9 @@ type SortKey =
   | "status_autorizacao";
 
 const PAGE_SIZE = 15;
+
+// Link do vídeo tutorial — atualizar quando o vídeo estiver publicado.
+const VIDEO_TUTORIAL_URL = "#";
 
 const COLUMNS: { key: SortKey; label: string; width?: string }[] = [
   { key: "nr_atendimento", label: "Atendimento", width: "w-[140px]" },
@@ -364,12 +368,12 @@ function Painel() {
       <main className="mx-auto max-w-[1680px] px-4 py-5 sm:px-6">
         <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
-            <div className="relative">
+            <div className="relative w-full">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={q}
                 onChange={(event) => setQ(event.target.value)}
-                placeholder="Pesquisa geral por atendimento, paciente, setor, convênio, prescrição, agenda, procedimento ou status"
+                placeholder="Pesquisar paciente, atendimento, convênio..."
                 className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
               />
             </div>
@@ -383,6 +387,15 @@ function Painel() {
               >
                 <FileText className="h-4 w-4" />
                 Documentação
+              </a>
+              <a
+                href={VIDEO_TUTORIAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground transition hover:bg-accent"
+              >
+                <Video className="h-4 w-4" />
+                Vídeo Tutorial
               </a>
               <button
                 onClick={() => void refetch()}
