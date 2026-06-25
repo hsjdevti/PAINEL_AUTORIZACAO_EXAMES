@@ -17,7 +17,6 @@ export const STATUS_AGENDAMENTO_OPTIONS: string[] = [
   "AGENDAMENTO REALIZADO",
   "AGENDAMENTO NÃO REALIZADO",
   "SEM AGENDAMENTO",
-  "VALIDAR AGENDAMENTO",
 ];
 
 // Classificação do "Setor Agenda".

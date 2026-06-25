@@ -53,8 +53,6 @@ SELECT
 
         WHEN x.dt_agenda IS NULL
             THEN 'SEM AGENDAMENTO'
-
-        ELSE 'VALIDAR AGENDAMENTO'
     END AS status_agendamento
 
 FROM (
