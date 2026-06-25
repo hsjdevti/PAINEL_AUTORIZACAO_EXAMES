@@ -172,8 +172,6 @@ function Painel() {
   const [prescrFrom, setPrescrFrom] = useState<Date | undefined>(undefined);
   const [prescrTo, setPrescrTo] = useState<Date | undefined>(undefined);
   const [fSetor, setFSetor] = useState("");
-  const [fPaciente, setFPaciente] = useState("");
-  const [fConvenio, setFConvenio] = useState("");
   const [fStatus, setFStatus] = useState<StatusAutorizacao | "">("");
   const [fStatusAgenda, setFStatusAgenda] = useState("");
   const [fSetorAgenda, setFSetorAgenda] = useState("");
@@ -210,8 +208,6 @@ function Painel() {
 
   const filtered = useMemo(() => {
     const qLower = normalize(q.trim());
-    const pacienteLower = normalize(fPaciente.trim());
-    const convenioLower = normalize(fConvenio.trim());
     const dayStart = dateFrom
       ? new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate(), 0, 0, 0).getTime()
       : null;
@@ -245,12 +241,6 @@ function Painel() {
       }
 
       if (fSetor && valueText(row.setor) !== fSetor) return false;
-      if (pacienteLower && !normalize(row.paciente).includes(pacienteLower)) return false;
-
-      if (convenioLower) {
-        const convenio = normalize(`${valueText(row.cd_convenio)} ${valueText(row.ds_convenio)}`);
-        if (!convenio.includes(convenioLower)) return false;
-      }
 
       if (fStatus && row.status_autorizacao !== fStatus) return false;
       if (fStatusAgenda && valueText(row.status_agendamento) !== fStatusAgenda) return false;
@@ -271,7 +261,7 @@ function Painel() {
 
       return true;
     });
-  }, [data, q, fSetor, fPaciente, fConvenio, fStatus, fStatusAgenda, fSetorAgenda, dateFrom, prescrFrom, prescrTo]);
+  }, [data, q, fSetor, fStatus, fStatusAgenda, fSetorAgenda, dateFrom, prescrFrom, prescrTo]);
 
   const sorted = useMemo(() => {
     const rows = [...filtered];
@@ -300,7 +290,7 @@ function Painel() {
 
   useEffect(() => {
     setPage(1);
-  }, [q, fSetor, fPaciente, fConvenio, fStatus, fStatusAgenda, fSetorAgenda, dateFrom, prescrFrom, prescrTo]);
+  }, [q, fSetor, fStatus, fStatusAgenda, fSetorAgenda, dateFrom, prescrFrom, prescrTo]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((current) => (current === "asc" ? "desc" : "asc"));
@@ -313,8 +303,6 @@ function Painel() {
   function clearFilters() {
     setQ("");
     setFSetor("");
-    setFPaciente("");
-    setFConvenio("");
     setFStatus("");
     setFStatusAgenda("");
     setFSetorAgenda("");
@@ -454,28 +442,6 @@ function Painel() {
                   </option>
                 ))}
               </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Paciente
-              <input
-                type="text"
-                value={fPaciente}
-                onChange={(event) => setFPaciente(event.target.value)}
-                placeholder="Nome do paciente"
-                className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-              />
-            </label>
-
-            <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Convênio
-              <input
-                type="text"
-                value={fConvenio}
-                onChange={(event) => setFConvenio(event.target.value)}
-                placeholder="Código ou descrição"
-                className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-              />
             </label>
 
             <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
