@@ -21,11 +21,11 @@ export const STATUS_AGENDAMENTO_OPTIONS: string[] = [
 
 // Classificação do "Setor Agenda".
 // Regras (Centro Médico tem precedência sobre Cardiológico para os tipos 30/94):
-//   - Centro Médico: cd_tipo_procedimento em 30, 94
+//   - Centro Médico: cd_tipo_procedimento em 30, 94, 118 (118 = NEURO/EEG)
 //   - Centro Cardiológico: cd_tipo_procedimento em 86, 87, 12 OU nr_seq_proc_interno em 19571, 13544
 //   - CDI: qualquer outro
 // Para ajustar, basta editar as listas abaixo.
-const TIPO_PROC_CENTRO_MEDICO = [30, 94];
+const TIPO_PROC_CENTRO_MEDICO = [30, 94, 118];
 const TIPO_PROC_CENTRO_CARDIOLOGICO = [86, 87, 12];
 const SEQ_PROC_CENTRO_CARDIOLOGICO = [19571, 13544];
 

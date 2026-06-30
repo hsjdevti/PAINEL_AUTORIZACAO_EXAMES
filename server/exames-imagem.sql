@@ -132,7 +132,10 @@ FROM (
 
     INNER JOIN tasy.procedimento pro
         ON pro.cd_procedimento = pc.cd_procedimento
-       AND pro.cd_tipo_procedimento IN (2,3,12,87,4,30,94)
+       AND (
+            pro.cd_tipo_procedimento IN (2,3,12,87,4,30,94)
+            OR pc.cd_procedimento = 40103200 -- NEURO (tipo 118): exceção liberada individualmente
+       )
 
     LEFT JOIN tasy.agenda_paciente ag
         ON ag.cd_pessoa_fisica = ap.cd_pessoa_fisica
