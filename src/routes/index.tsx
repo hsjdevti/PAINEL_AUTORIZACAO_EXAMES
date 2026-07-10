@@ -26,9 +26,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  AGENDA_SETOR_OPTIONS,
+  CENARIO_OPTIONS,
+  EXAMES_SETOR_OPTIONS,
   fetchExamesImagem,
-  getSetorAgenda,
   STATUS_AGENDAMENTO_OPTIONS,
   STATUS_AUTORIZACAO_OPTIONS,
   type ExameImagem,
@@ -57,6 +57,7 @@ type SortKey =
   | "setor"
   | "ds_convenio"
   | "nr_prescricao"
+  | "dt_prescricao"
   | "dt_evento_exame"
   | "ds_procedimento_interno"
   | "status_agendamento"
@@ -112,8 +113,8 @@ function agendaStatusBadge(status: string | null | undefined) {
     case "AGENDAMENTO REALIZADO":
       return "bg-status-authorized-bg text-status-authorized ring-1 ring-status-authorized/40";
     case "AGENDADO":
-      return "bg-status-validate-bg text-status-validate ring-1 ring-status-validate/40";
-    case "AGENDAMENTO NÃO REALIZADO":
+      return "bg-status-scheduled-bg text-status-scheduled ring-1 ring-status-scheduled/40";
+    case "AGENDA NÃO REALIZADA":
       return "bg-status-pending-bg text-status-pending ring-1 ring-status-pending/45";
     case "SEM AGENDAMENTO":
       return "bg-status-empty-bg text-status-empty ring-1 ring-status-empty/40";
@@ -171,8 +172,9 @@ function Painel() {
   const [fStatus, setFStatus] = useState<StatusAutorizacao | "">("");
   const [fStatusAgenda, setFStatusAgenda] = useState("");
   const [fSetorAgenda, setFSetorAgenda] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("dt_evento_exame");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [fCenario, setFCenario] = useState("NAO_REALIZADOS");
+  const [sortKey, setSortKey] = useState<SortKey>("dt_prescricao");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(1);
 
   const {
@@ -217,6 +219,16 @@ function Painel() {
       ? new Date(prescrTo.getFullYear(), prescrTo.getMonth(), prescrTo.getDate(), 23, 59, 59, 999).getTime()
       : null;
 
+    // Janela de dt_prescricao exclusiva do cenário "Não realizados":
+    // do dia atual até 45 dias atrás.
+    const hoje = new Date();
+    const cenarioNaoRealStart = new Date(
+      hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 45, 0, 0, 0,
+    ).getTime();
+    const cenarioNaoRealEnd = new Date(
+      hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59, 999,
+    ).getTime();
+
     return data.filter((row) => {
       if (qLower) {
         const blob = normalize(
@@ -240,7 +252,19 @@ function Painel() {
 
       if (fStatus && row.status_autorizacao !== fStatus) return false;
       if (fStatusAgenda && valueText(row.status_agendamento) !== fStatusAgenda) return false;
-      if (fSetorAgenda && getSetorAgenda(row.cd_tipo_procedimento, row.nr_seq_proc_interno) !== fSetorAgenda) return false;
+      if (fSetorAgenda && valueText(row.exames_setor) !== fSetorAgenda) return false;
+
+      if (fCenario) {
+        const realizado = valueText(row.status_agendamento) === "EXAME REALIZADO";
+        if (fCenario === "REALIZADOS" && !realizado) return false;
+        if (fCenario === "NAO_REALIZADOS") {
+          if (realizado) return false;
+          // Só prescrições dos últimos 45 dias (dia atual até 45 dias atrás).
+          const prescrTs = parseDateTime(row.dt_prescricao);
+          if (prescrTs === null) return false;
+          if (prescrTs < cenarioNaoRealStart || prescrTs > cenarioNaoRealEnd) return false;
+        }
+      }
 
       if (dayStart !== null && dayEnd !== null) {
         const agendaTs = parseDateTime(row.dt_evento_exame);
@@ -257,15 +281,15 @@ function Painel() {
 
       return true;
     });
-  }, [data, q, fSetor, fStatus, fStatusAgenda, fSetorAgenda, dateFrom, prescrFrom, prescrTo]);
+  }, [data, q, fSetor, fStatus, fStatusAgenda, fSetorAgenda, fCenario, dateFrom, prescrFrom, prescrTo]);
 
   const sorted = useMemo(() => {
     const rows = [...filtered];
 
     rows.sort((a, b) => {
-      if (sortKey === "dt_evento_exame") {
-        const av = parseDateTime(a.dt_evento_exame) ?? Number.POSITIVE_INFINITY;
-        const bv = parseDateTime(b.dt_evento_exame) ?? Number.POSITIVE_INFINITY;
+      if (sortKey === "dt_evento_exame" || sortKey === "dt_prescricao") {
+        const av = parseDateTime(a[sortKey]) ?? Number.POSITIVE_INFINITY;
+        const bv = parseDateTime(b[sortKey]) ?? Number.POSITIVE_INFINITY;
         return sortDir === "asc" ? av - bv : bv - av;
       }
 
@@ -286,7 +310,7 @@ function Painel() {
 
   useEffect(() => {
     setPage(1);
-  }, [q, fSetor, fStatus, fStatusAgenda, fSetorAgenda, dateFrom, prescrFrom, prescrTo]);
+  }, [q, fSetor, fStatus, fStatusAgenda, fSetorAgenda, fCenario, dateFrom, prescrFrom, prescrTo]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((current) => (current === "asc" ? "desc" : "asc"));
@@ -302,6 +326,7 @@ function Painel() {
     setFStatus("");
     setFStatusAgenda("");
     setFSetorAgenda("");
+    setFCenario("NAO_REALIZADOS");
     setDateFrom(undefined);
     setPrescrFrom(undefined);
     setPrescrTo(undefined);
@@ -415,6 +440,22 @@ function Painel() {
           )}
 
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Cenário
+              <select
+                value={fCenario}
+                onChange={(event) => setFCenario(event.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              >
+                <option value="">Base completa</option>
+                {CENARIO_OPTIONS.map((cenario) => (
+                  <option key={cenario.value} value={cenario.value}>
+                    {cenario.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Setor
               <select
@@ -536,7 +577,7 @@ function Painel() {
                 className="h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
               >
                 <option value="">Todos</option>
-                {AGENDA_SETOR_OPTIONS.map((grupo) => (
+                {EXAMES_SETOR_OPTIONS.map((grupo) => (
                   <option key={grupo} value={grupo}>
                     {grupo}
                   </option>

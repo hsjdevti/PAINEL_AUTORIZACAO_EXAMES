@@ -32,6 +32,8 @@
   --color-status-empty-bg: var(--status-empty-bg);
   --color-status-validate: var(--status-validate);
   --color-status-validate-bg: var(--status-validate-bg);
+  --color-status-scheduled: var(--status-scheduled);
+  --color-status-scheduled-bg: var(--status-scheduled-bg);
 
 
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
@@ -77,6 +79,9 @@
   --status-empty-bg: oklch(0.31 0.07 220);
   --status-validate: oklch(0.72 0.20 22);
   --status-validate-bg: oklch(0.32 0.10 22);
+  /* AGENDADO: destaque violeta — chama atenção sem conotação negativa */
+  --status-scheduled: oklch(0.80 0.16 300);
+  --status-scheduled-bg: oklch(0.33 0.09 300);
 }
 
 

@@ -15,35 +15,28 @@ export const STATUS_AGENDAMENTO_OPTIONS: string[] = [
   "EXAME REALIZADO",
   "AGENDADO",
   "AGENDAMENTO REALIZADO",
-  "AGENDAMENTO NÃO REALIZADO",
+  "AGENDA NÃO REALIZADA",
   "SEM AGENDAMENTO",
 ];
 
-// Classificação do "Setor Agenda".
-// Regras (Centro Médico tem precedência sobre Cardiológico para os tipos 30/94):
-//   - Centro Médico: cd_tipo_procedimento em 30, 94, 118 (118 = NEURO/EEG)
-//   - Centro Cardiológico: cd_tipo_procedimento em 86, 87, 12 OU nr_seq_proc_interno em 19571, 13544
-//   - CDI: qualquer outro
-// Para ajustar, basta editar as listas abaixo.
-const TIPO_PROC_CENTRO_MEDICO = [30, 94, 118];
-const TIPO_PROC_CENTRO_CARDIOLOGICO = [86, 87, 12];
-const SEQ_PROC_CENTRO_CARDIOLOGICO = [19571, 13544];
+// Cenário: recorte rápido pela situação de realização do exame.
+//   - "" (Base completa): sem filtro, mostra todo o histórico.
+//   - NAO_REALIZADOS: tudo que ainda NÃO foi realizado
+//       (status_agendamento diferente de 'EXAME REALIZADO'): o foco de pendências.
+//   - REALIZADOS: apenas exames já realizados (histórico concluído).
+export const CENARIO_OPTIONS: { value: string; label: string }[] = [
+  { value: "NAO_REALIZADOS", label: "Não realizados" },
+  { value: "REALIZADOS", label: "Realizados" },
+];
 
-export const AGENDA_SETOR_OPTIONS: string[] = ["CDI", "Centro Cardiológico", "Centro Médico"];
-
-export function getSetorAgenda(
-  cdTipoProcedimento: number | string | null | undefined,
-  nrSeqProcInterno: number | string | null | undefined,
-): string {
-  const tipo = Number(cdTipoProcedimento);
-  const seq = Number(nrSeqProcInterno);
-
-  if (TIPO_PROC_CENTRO_MEDICO.includes(tipo)) return "Centro Médico";
-  if (TIPO_PROC_CENTRO_CARDIOLOGICO.includes(tipo) || SEQ_PROC_CENTRO_CARDIOLOGICO.includes(seq)) {
-    return "Centro Cardiológico";
-  }
-  return "CDI";
-}
+// Setor Agenda: valores vêm direto da coluna `exames_setor` do SQL
+// (CASE por cd_procedimento em server/exames-imagem.sql).
+// Para ajustar os rótulos ou as regras, edite o CASE no SQL.
+export const EXAMES_SETOR_OPTIONS: string[] = [
+  "Exames CDI",
+  "Exames Cardiologia",
+  "Exames Centro Médico",
+];
 
 export interface ExameImagem {
   cd_setor_atendimento: number | string | null;
@@ -62,6 +55,7 @@ export interface ExameImagem {
   nr_seq_proc_interno: number | string | null;
   cd_agenda: number | string | null;
   ds_agenda: string | null;
+  exames_setor: string | null;
   status_agendamento: string | null;
   dt_prescricao: string | null;
   dt_validade_prescr: string | null;
