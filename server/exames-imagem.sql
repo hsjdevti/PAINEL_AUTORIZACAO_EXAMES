@@ -64,7 +64,21 @@ FROM (
         un.nr_atendimento,
         ag.dt_agenda,
         ap.cd_pessoa_fisica,
-        tasy.obter_nome_paciente(un.nr_atendimento) paciente,
+        -- LGPD: expoe apenas as iniciais do paciente (ex.: 'IZABELLE LIMA DE CARVALHO' -> 'I. L. C.').
+        -- O nome completo nunca sai do banco. Os dois REGEXP internos removem as preposicoes
+        -- (de/da/do/das/dos/e) e o externo reduz cada palavra restante a sua inicial.
+        TRIM(
+            REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                    REGEXP_REPLACE(
+                        ' ' || UPPER(TRIM(tasy.obter_nome_paciente(un.nr_atendimento))) || ' ',
+                        ' (DE|DA|DO|DAS|DOS|E) ', ' '
+                    ),
+                    ' (DE|DA|DO|DAS|DOS|E) ', ' '
+                ),
+                ' *([^ ])[^ ]*', '\1. '
+            )
+        ) paciente,
         tasy.obter_convenio_atendimento(ap.nr_atendimento) cd_convenio,
         tasy.obter_desc_convenio(tasy.obter_convenio_atendimento(ap.nr_atendimento)) ds_convenio,
         pm.nr_prescricao,
