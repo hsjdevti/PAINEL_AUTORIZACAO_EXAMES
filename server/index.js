@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 
+import { filtrarOcultas } from "./ocultas.js";
 import { ApiError, getExamesImagem } from "./oracle.js";
 
 dotenv.config();
@@ -17,11 +18,17 @@ app.get("/api/health", (_request, response) => {
 
 app.get("/api/exames-imagem", async (_request, response) => {
   try {
-    const data = await getExamesImagem();
+    // Este painel e o operacional: so le. O que o coordenador apagou no HSJ
+    // Performance some daqui tambem, para os dois mostrarem a mesma fila.
+    const { linhas: data, removidas } = await filtrarOcultas(await getExamesImagem());
+    if (removidas > 0) {
+      console.log(`[ocultas] ${removidas} linha(s) apagadas no Performance nao foram exibidas`);
+    }
 
     response.json({
       data,
       count: data.length,
+      ocultas: removidas,
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
