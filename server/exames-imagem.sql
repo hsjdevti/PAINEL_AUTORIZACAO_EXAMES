@@ -175,7 +175,10 @@ FROM (
         ON pro.cd_procedimento = pc.cd_procedimento
        AND (
             pro.cd_tipo_procedimento IN (2,3,12,87,4,30,94)
-            OR pc.cd_procedimento = 40103200 -- NEURO (tipo 118): exceção liberada individualmente
+            OR pc.cd_procedimento IN (
+                40103200, -- NEURO (tipo 118): exceção liberada individualmente
+                40901360  -- Doppler de carótidas e vertebrais (tipo 33, proc. interno 13544)
+            )
        )
 
     LEFT JOIN tasy.agenda_paciente ag
