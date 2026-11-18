@@ -240,6 +240,10 @@ function Painel() {
             row.ds_convenio,
             row.nr_prescricao,
             row.ds_procedimento_interno,
+            // Proc. interno (ex.: 13544) e código do procedimento (ex.: 40901360):
+            // o proc. interno aparece na tabela, então precisa achar pela busca.
+            row.nr_seq_proc_interno,
+            row.cd_procedimento,
             row.status_agendamento,
             row.status_autorizacao,
           ].join(" "),
@@ -382,7 +386,7 @@ function Painel() {
               <input
                 value={q}
                 onChange={(event) => setQ(event.target.value)}
-                placeholder="Pesquisar paciente, atendimento, convênio..."
+                placeholder="Pesquisar paciente, atendimento, convênio, exame ou proc. interno..."
                 className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30"
               />
             </div>
